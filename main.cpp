@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <csignal>
 #include <sys/stat.h>
+#include <ctype.h>
 
 #define BUFFSIZE 2048
 #define DEFAULT_PORT 23333
@@ -46,6 +47,10 @@ int getLine(int sock, char *buf, size_t size) {
     return i;
 }
 
+void unimplemented(int client) {
+
+}
+
 void acceptRequest(int client_socket) {
     char buf[1024] = {0}; // 读取请求行
     int numchars = 0;
@@ -57,16 +62,30 @@ void acceptRequest(int client_socket) {
     struct stat st;
     char *query_string = nullptr;
 //    打印报文
-    while(1)
-    {
+/*    while(1) {
         numchars = getLine(client_socket, buf, sizeof(buf));
         if (numchars == 0) {
             break;
         }
             printf("%s\n", buf);
             memset(buf, 0, sizeof(buf));
+    }*/
+//    读取请求行 在method里面存入请求方法
+    numchars = getLine(client_socket, buf, sizeof(buf));
+    while (!isspace(buf[j]) && (i < sizeof(method) - 1)) {
+        method[i] = buf[j];
+        i ++;
+        j ++;
     }
-
+    method[i] = '\0';
+    if (strcasecmp(method, "GET") != 0) {
+        sprintf(buf, "HTTP/1.1 400 Bad Request\r\nconnection: close\r\n\r\n");
+        send(client_socket, buf, strlen(buf), 0);
+        return;
+    } else {
+        sprintf(buf, "HTTP/1.1 200 ok\r\nconnection: close\r\n\r\n");
+        send(client_socket, buf, strlen(buf), 0);
+    }
 
 }
 
